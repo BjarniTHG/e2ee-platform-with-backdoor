@@ -78,18 +78,17 @@ async function getDB(): Promise<IDBPDatabase<WhistleblowerDB>> {
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export async function saveAuth(token: string, shortCode: string): Promise<void> {
-    const db = await getDB()
-    await db.put('auth', { token, shortCode }, 'current')
+    sessionStorage.setItem('auth', JSON.stringify({ token, shortCode }))
 }
 
 export async function loadAuth(): Promise<{ token: string; shortCode: string } | undefined> {
-    const db = await getDB()
-    return db.get('auth', 'current')
+    const stored = sessionStorage.getItem('auth')
+    if (!stored) return undefined
+    return JSON.parse(stored)
 }
 
 export async function clearAuth(): Promise<void> {
-    const db = await getDB()
-    await db.delete('auth', 'current')
+    sessionStorage.removeItem('auth')
 }
 
 // ── Identity Key ──────────────────────────────────────────────────────────────

@@ -3,14 +3,15 @@ import {
     SessionRecordType,
     Direction,
     StorageType,
+    SessionRecord,
 } from '@privacyresearch/libsignal-protocol-typescript'
 import {
-    loadIdentityKey,
+    loadIdentityKey as loadIdentityKeyFromDB,
     loadSignedPrekey,
     loadOneTimePrekey,
     deleteOneTimePrekey,
     saveSession,
-    loadSession,
+    loadSession as loadSessionFromDB,
 } from '../storage/idb'
 import { base64ToArrayBuffer, arrayBufferToBase64 } from './keyGeneration'
 
@@ -24,9 +25,10 @@ export class SignalProtocolStore implements StorageType {
 
     // ── Identity ──────────────────────────────────────────────────────────────
     async getIdentityKeyPair() {
-        if (this.identityKeyPair) return this.identityKeyPair
-        const stored = await loadIdentityKey()
-        if (!stored) throw new Error('Identity key not found')
+        console.log('[store] getIdentityKeyPair called')
+        const stored = await loadIdentityKeyFromDB()
+        console.log('[store] identity key loaded:', stored)
+        if (!stored) throw new Error('Identity key not found in IndexedDB')
         this.identityKeyPair = stored
         return stored
     }
@@ -55,12 +57,11 @@ export class SignalProtocolStore implements StorageType {
 
     // ── Signed Prekey ─────────────────────────────────────────────────────────
     async loadSignedPreKey(keyId: number) {
+        console.log('[store] loadSignedPreKey called with id:', keyId)
         const stored = await loadSignedPrekey(keyId)
+        console.log('[store] signed prekey loaded:', stored)
         if (!stored) throw new Error(`Signed prekey ${keyId} not found`)
-        return {
-            pubKey:  stored.pubKey,
-            privKey: stored.privKey,
-        }
+        return { pubKey: stored.pubKey, privKey: stored.privKey }
     }
 
     async storeSignedPreKey(keyId: number, keyPair: { pubKey: ArrayBuffer; privKey: ArrayBuffer }) {
@@ -73,12 +74,11 @@ export class SignalProtocolStore implements StorageType {
 
     // ── One-time Prekeys ──────────────────────────────────────────────────────
     async loadPreKey(keyId: number) {
+        console.log('[store] loadPreKey called with id:', keyId)
         const stored = await loadOneTimePrekey(keyId)
-        if (!stored) throw new Error(`One time prekey ${keyId} not found`)
-        return {
-            pubKey:  stored.pubKey,
-            privKey: stored.privKey,
-        }
+        console.log('[store] one time prekey loaded:', stored)
+        if (!stored) return undefined
+        return { pubKey: stored.pubKey, privKey: stored.privKey }
     }
 
     async storePreKey(keyId: number, keyPair: { pubKey: ArrayBuffer; privKey: ArrayBuffer }) {
@@ -91,17 +91,20 @@ export class SignalProtocolStore implements StorageType {
 
     // ── Sessions ──────────────────────────────────────────────────────────────
     async loadSession(identifier: string): Promise<SessionRecordType | undefined> {
-        const stored = await loadSession(identifier)
+        console.log('[store] loadSession called for:', identifier)
+        const stored = await loadSessionFromDB(identifier)
+        console.log('[store] session found:', !!stored)
         if (!stored) return undefined
-        // Deserialize from ArrayBuffer back to session record
         const text = new TextDecoder().decode(stored)
-        return JSON.parse(text)
+        return text as unknown as SessionRecordType
     }
 
     async storeSession(identifier: string, record: SessionRecordType): Promise<void> {
-        // Serialize session record to ArrayBuffer for IndexedDB storage
-        const text    = JSON.stringify(record)
-        const encoded = new TextEncoder().encode(text)
+        // libsignal passes record as an already-serialized string
+        const serialized = typeof record === 'string'
+            ? record
+            : JSON.stringify(record)
+        const encoded = new TextEncoder().encode(serialized)
         await saveSession(identifier, encoded.buffer)
     }
 

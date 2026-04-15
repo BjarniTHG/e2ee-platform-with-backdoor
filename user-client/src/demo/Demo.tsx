@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { register } from '../api/auth'
 import { uploadPrekeyBundle, fetchPrekeyBundle } from '../api/keys'
 import { sendMessage, connectSocket } from '../api/messages'
-import { generateAndStoreKeyBundle, formatBundleForUpload } from '../crypto/keyGeneration'
+import { generateAndStoreKeyBundle, formatBundleForUpload, loadExistingKeyBundle } from '../crypto/keyGeneration'
 import { saveAuth, loadAuth } from '../storage/idb'
 import { SignalProtocolStore } from '../crypto/signalStore'
 import { initializeSession } from '../crypto/x3dh'
@@ -80,6 +80,40 @@ export default function Demo() {
         }
     }
 
+    async function handleLoadExisting() {
+        try {
+            const auth = await loadAuth()
+            if (!auth) { print('❌ No stored auth found'); return }
+
+            const existing = await loadExistingKeyBundle()
+            if (!existing) { print('❌ No stored keys found — register first'); return }
+
+            store = new SignalProtocolStore(existing.registrationId)
+            setToken(auth.token)
+            setShortCode(auth.shortCode)
+            print(`✅ Loaded existing identity: ${auth.shortCode}`)
+
+            connectSocket(auth.token, async (senderShortCode, payload) => {
+                try {
+                    if (!store) return
+                    const ciphertext = atob(payload.ciphertext)
+                    const plaintext  = await decryptMessage(
+                        store,
+                        senderShortCode,
+                        ciphertext,
+                        payload.message_type
+                    )
+                    print(`📨 Message from ${senderShortCode}: ${plaintext}`)
+                } catch (err: any) {
+                    print(`❌ Decrypt error: ${err.message}`)
+                }
+            })
+            print('✅ Listening for messages')
+        } catch (err: any) {
+            print(`❌ ${err.message}`)
+        }
+    }
+
     return (
         <div style={{ padding: 32, fontFamily: 'monospace' }}>
             <h2>Signal Protocol Demo</h2>
@@ -89,6 +123,10 @@ export default function Demo() {
 
             <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
                 <button onClick={handleRegister}>1. Register</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <button onClick={handleLoadExisting}>1b. Load Existing</button>
             </div>
 
             <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>

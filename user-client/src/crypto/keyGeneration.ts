@@ -92,6 +92,8 @@ export async function generateKeyBundle(): Promise<GeneratedKeyBundle> {
 export async function generateAndStoreKeyBundle(): Promise<GeneratedKeyBundle> {
     const bundle = await generateKeyBundle()
 
+    localStorage.setItem('registrationId', bundle.registrationId.toString())
+
     await saveIdentityKey(
         bundle.identityKey.pubKey,
         bundle.identityKey.privKey,
@@ -121,4 +123,13 @@ export function formatBundleForUpload(bundle: GeneratedKeyBundle): object {
             public: arrayBufferToBase64(opk.pubKey),
         })),
     }
+}
+
+export async function loadExistingKeyBundle(): Promise<{ registrationId: number } | null> {
+    const identity = await loadIdentityKey()
+    if (!identity) return null
+    // Registration ID is not stored currently — fix below
+    const storedId = localStorage.getItem('registrationId')
+    if (!storedId) return null
+    return { registrationId: parseInt(storedId) }
 }

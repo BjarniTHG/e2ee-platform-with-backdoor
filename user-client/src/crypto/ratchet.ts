@@ -10,14 +10,16 @@ export async function encryptMessage(
     recipientShortCode: string,
     plaintext: string
 ): Promise<{ ciphertext: string | ArrayBuffer; messageType: number }> {
+    console.log('[ratchet] encrypting for:', recipientShortCode)
     const address = new SignalProtocolAddress(recipientShortCode, 1)
     const cipher  = new SessionCipher(store, address)
-
-    const encoded   = new TextEncoder().encode(plaintext)
+    console.log('[ratchet] cipher created')
+    const encoded = new TextEncoder().encode(plaintext)
+    console.log('[ratchet] calling cipher.encrypt')
     const encrypted = await cipher.encrypt(encoded.buffer)
-
+    console.log('[ratchet] encrypted:', encrypted)
     return {
-        ciphertext:  encrypted.body,   // keep as string, do not cast
+        ciphertext:  encrypted.body,
         messageType: encrypted.type,
     }
 }
