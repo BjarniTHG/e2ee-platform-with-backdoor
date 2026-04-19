@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client'
 import axios from 'axios'
-import { arrayBufferToBase64, base64ToArrayBuffer } from '../crypto/keyGeneration'
+import { arrayBufferToBase64 } from '../crypto/keyGeneration'
+import type { ContactRequest } from './conversations'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050'
 
@@ -8,7 +9,9 @@ let socket: Socket | null = null
 
 export function connectSocket(
     token: string,
-    onMessage: (senderShortCode: string, payload: any) => void
+    onMessage:        (senderShortCode: string, payload: any) => void,
+    onContactRequest: (request: ContactRequest) => void,
+    onConversationAccepted: (conversationId: number, shortCode: string) => void,
 ): void {
     socket = io(BASE_URL, { auth: { token } })
 
@@ -18,6 +21,14 @@ export function connectSocket(
 
     socket.on('receive_message', (data) => {
         onMessage(data.sender_short_code, data.payload)
+    })
+
+    socket.on('contact_request', (data: ContactRequest) => {
+        onContactRequest(data)
+    })
+
+    socket.on('conversation_accepted', (data) => {
+        onConversationAccepted(data.conversation_id, data.recipient_short_code)
     })
 
     socket.on('disconnect', () => {
@@ -33,10 +44,9 @@ export function disconnectSocket(): void {
 export async function sendMessage(
     token: string,
     recipientShortCode: string,
-    ciphertext: ArrayBuffer | string,
+    ciphertext: string | ArrayBuffer,
     messageType: number
 ): Promise<void> {
-    // libsignal returns body as a string, handle both cases
     const ciphertextB64 = typeof ciphertext === 'string'
         ? btoa(ciphertext)
         : arrayBufferToBase64(ciphertext)

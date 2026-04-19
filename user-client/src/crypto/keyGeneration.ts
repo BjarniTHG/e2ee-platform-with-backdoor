@@ -135,3 +135,21 @@ export async function loadExistingKeyBundle(): Promise<{ registrationId: number 
     if (!storedId) return null
     return { registrationId: parseInt(storedId) }
 }
+
+// OPK
+export async function generateAdditionalOpks(
+    startId: number,
+    count: number = 20
+): Promise<{ id: number; pubKey: ArrayBuffer; privKey: ArrayBuffer }[]> {
+    const opks = []
+    for (let i = 0; i < count; i++) {
+        const opk = await KeyHelper.generatePreKey(startId + i)
+        opks.push({
+            id:      opk.keyId,
+            pubKey:  opk.keyPair.pubKey,
+            privKey: opk.keyPair.privKey,
+        })
+    }
+    await saveOneTimePrekeys(opks)
+    return opks
+}

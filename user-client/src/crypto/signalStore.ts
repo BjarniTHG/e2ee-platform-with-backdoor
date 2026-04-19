@@ -90,19 +90,19 @@ export class SignalProtocolStore implements StorageType {
     async loadSession(identifier: string): Promise<SessionRecordType | undefined> {
         console.log('[store] loadSession called for:', identifier)
         const stored = await loadSessionFromDB(identifier)
-        console.log('[store] session found:', !!stored)
+        console.log('[store] session found:', !!stored, 'for:', identifier)
         if (!stored) return undefined
         const text = new TextDecoder().decode(stored)
         return text as unknown as SessionRecordType
     }
 
     async storeSession(identifier: string, record: SessionRecordType): Promise<void> {
-        // libsignal passes record as an already-serialized string
-        const serialized = typeof record === 'string'
-            ? record
-            : JSON.stringify(record)
+        console.log('[store] storeSession called for:', identifier)
+        const serialized = typeof record === 'string' ? record : JSON.stringify(record)
+        console.log('[store] serialized length:', serialized.length)
         const encoded = new TextEncoder().encode(serialized)
         await saveSession(identifier, encoded.buffer)
+        console.log('[store] session saved for:', identifier)
     }
 
     async removeSession(identifier: string): Promise<void> {
