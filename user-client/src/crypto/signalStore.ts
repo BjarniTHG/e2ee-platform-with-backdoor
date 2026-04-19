@@ -3,7 +3,6 @@ import {
     SessionRecordType,
     Direction,
     StorageType,
-    SessionRecord,
 } from '@privacyresearch/libsignal-protocol-typescript'
 import {
     loadIdentityKey as loadIdentityKeyFromDB,
@@ -23,7 +22,7 @@ export class SignalProtocolStore implements StorageType {
         this.registrationId = registrationId
     }
 
-    // ── Identity ──────────────────────────────────────────────────────────────
+    // IK ----------------------------------------------------
     async getIdentityKeyPair() {
         console.log('[store] getIdentityKeyPair called')
         const stored = await loadIdentityKeyFromDB()
@@ -42,8 +41,6 @@ export class SignalProtocolStore implements StorageType {
         identityKey: ArrayBuffer,
         _direction: Direction
     ): Promise<boolean> {
-        // For this project we trust all identities
-        // In production you would verify against a trusted key store
         return true
     }
 
@@ -55,7 +52,7 @@ export class SignalProtocolStore implements StorageType {
         return undefined
     }
 
-    // ── Signed Prekey ─────────────────────────────────────────────────────────
+    // SPK ----------------------------------------------------------------------
     async loadSignedPreKey(keyId: number) {
         console.log('[store] loadSignedPreKey called with id:', keyId)
         const stored = await loadSignedPrekey(keyId)
@@ -65,14 +62,14 @@ export class SignalProtocolStore implements StorageType {
     }
 
     async storeSignedPreKey(keyId: number, keyPair: { pubKey: ArrayBuffer; privKey: ArrayBuffer }) {
-        // Already stored during key generation
+        // Maybe implement
     }
 
     async removeSignedPreKey(keyId: number) {
-        // Handle SPK rotation later
+        // TODO: Handle SPK rotation later
     }
 
-    // ── One-time Prekeys ──────────────────────────────────────────────────────
+    // OPK ---------------------------------------------------------------------------
     async loadPreKey(keyId: number) {
         console.log('[store] loadPreKey called with id:', keyId)
         const stored = await loadOneTimePrekey(keyId)
@@ -82,14 +79,14 @@ export class SignalProtocolStore implements StorageType {
     }
 
     async storePreKey(keyId: number, keyPair: { pubKey: ArrayBuffer; privKey: ArrayBuffer }) {
-        // Already stored during key generation
+        // Maybe implement
     }
 
     async removePreKey(keyId: number) {
         await deleteOneTimePrekey(keyId)
     }
 
-    // ── Sessions ──────────────────────────────────────────────────────────────
+    // SESSION -------------------------------------------------
     async loadSession(identifier: string): Promise<SessionRecordType | undefined> {
         console.log('[store] loadSession called for:', identifier)
         const stored = await loadSessionFromDB(identifier)
@@ -109,10 +106,10 @@ export class SignalProtocolStore implements StorageType {
     }
 
     async removeSession(identifier: string): Promise<void> {
-        // Handle session removal if needed
+        // Maybe implement
     }
 
     async removeAllSessions(identifier: string): Promise<void> {
-        // Handle clearing all sessions if needed
+        // Maybe implement
     }
 }

@@ -32,7 +32,6 @@ def upload_prekey_bundle():
     if not all(k in data for k in required):
         return jsonify({"error": "Missing fields"}), 400
 
-    # Upsert identity key
     ik = IdentityKey.query.filter_by(user_id=user.id).first()
     if ik:
         ik.ik_public = data["ik_public"]
@@ -40,7 +39,6 @@ def upload_prekey_bundle():
         ik = IdentityKey(user_id=user.id, ik_public=data["ik_public"])
         db.session.add(ik)
 
-    # Upsert signed prekey
     spk = SignedPrekey.query.filter_by(user_id=user.id).first()
     if spk:
         spk.spk_id        = data["spk_id"]
@@ -55,7 +53,6 @@ def upload_prekey_bundle():
         )
         db.session.add(spk)
 
-    # Append new one-time prekeys
     for opk_data in data["opks"]:
         opk = OneTimePrekey(
             user_id=user.id,
@@ -72,9 +69,8 @@ def upload_prekey_bundle():
 @require_auth
 def fetch_prekey_bundle(short_code):
     """
-    Fetch another user's prekey bundle by their short code.
+    Fetch a user's prekey bundle by their short code.
     Returns one OPK and marks it as used.
-    If no OPKs remain, returns bundle without OPK.
     """
     target = User.query.filter_by(short_code=short_code).first()
     if not target:
@@ -86,7 +82,6 @@ def fetch_prekey_bundle(short_code):
     if not ik or not spk:
         return jsonify({"error": "Prekey bundle not uploaded yet"}), 404
 
-    # Grab one unused OPK and mark it used
     opk = OneTimePrekey.query.filter_by(user_id=target.id, used=False).first()
     if opk:
         opk.used = True
@@ -112,7 +107,6 @@ def fetch_prekey_bundle(short_code):
 def opk_count():
     """
     Returns the number of unused OPKs remaining for the authenticated user.
-    Client should call this periodically and upload more when count is low.
     """
     count = OneTimePrekey.query.filter_by(
         user_id=g.user.id, used=False

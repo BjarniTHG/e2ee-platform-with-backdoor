@@ -30,8 +30,8 @@ export default function Demo() {
             store = new SignalProtocolStore(bundle.registrationId)
             setToken(t)
             setShortCode(short_code)
-            print(`✅ Registered as: ${short_code}`)
-            print(`✅ Keys generated and uploaded`)
+            print(`Registered as: ${short_code}`)
+            print(`Keys generated and uploaded`)
 
             // Connect socket and listen for incoming messages
             connectSocket(t, async (senderShortCode, payload) => {
@@ -45,53 +45,53 @@ export default function Demo() {
                         ciphertext,
                         payload.message_type
                     )
-                    print(`📨 Message from ${senderShortCode}: ${plaintext}`)
+                    print(`Message from ${senderShortCode}: ${plaintext}`)
                 } catch (err: any) {
-                    print(`❌ Decrypt error: ${err.message}`)
+                    print(`ERROR: Decrypt error: ${err.message}`)
                 }
             })
-            print('✅ Listening for messages')
+            print('Listening for messages')
         } catch (err: any) {
-            print(`❌ ${err.message}`)
+            print(`ERROR: ${err.message}`)
         }
     }
 
     async function handleInitSession() {
         try {
-            if (!store || !token) { print('❌ Register first'); return }
+            if (!store || !token) { print('ERROR: Register first'); return }
             print(`Fetching prekey bundle for ${targetCode}...`)
             const bundle = await fetchPrekeyBundle(token, targetCode)
             await initializeSession(store, bundle)
-            print(`✅ Session initialized with ${targetCode}`)
+            print(`Session initialized with ${targetCode}`)
         } catch (err: any) {
-            print(`❌ ${err.message}`)
+            print(`ERROR: ${err.message}`)
         }
     }
 
     async function handleSend() {
         try {
-            if (!store || !token) { print('❌ Register first'); return }
+            if (!store || !token) { print('ERROR: Register first'); return }
             const { ciphertext, messageType } = await encryptMessage(store, targetCode, messageText)
             await sendMessage(token, targetCode, ciphertext, messageType)
-            print(`✅ Sent to ${targetCode}: ${messageText}`)
+            print(`Sent to ${targetCode}: ${messageText}`)
             setMessageText('')
         } catch (err: any) {
-            print(`❌ ${err.message}`)
+            print(`ERROR: ${err.message}`)
         }
     }
 
     async function handleLoadExisting() {
         try {
             const auth = await loadAuth()
-            if (!auth) { print('❌ No stored auth found'); return }
+            if (!auth) { print('ERROR: No stored auth found'); return }
 
             const existing = await loadExistingKeyBundle()
-            if (!existing) { print('❌ No stored keys found — register first'); return }
+            if (!existing) { print('ERROR: No stored keys found — register first'); return }
 
             store = new SignalProtocolStore(existing.registrationId)
             setToken(auth.token)
             setShortCode(auth.shortCode)
-            print(`✅ Loaded existing identity: ${auth.shortCode}`)
+            print(`Loaded existing identity: ${auth.shortCode}`)
 
             connectSocket(auth.token, async (senderShortCode, payload) => {
                 try {
@@ -103,14 +103,14 @@ export default function Demo() {
                         ciphertext,
                         payload.message_type
                     )
-                    print(`📨 Message from ${senderShortCode}: ${plaintext}`)
+                    print(`Message from ${senderShortCode}: ${plaintext}`)
                 } catch (err: any) {
-                    print(`❌ Decrypt error: ${err.message}`)
+                    print(`ERROR: Decrypt error: ${err.message}`)
                 }
             })
-            print('✅ Listening for messages')
+            print('Listening for messages')
         } catch (err: any) {
-            print(`❌ ${err.message}`)
+            print(`ERROR: ${err.message}`)
         }
     }
 

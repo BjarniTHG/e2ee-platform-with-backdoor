@@ -21,9 +21,13 @@ def create_app():
     from .routes.auth import auth_bp
     from .routes.keys import keys_bp
     from .routes.messages import messages_bp
-    app.register_blueprint(auth_bp,     url_prefix="/auth")
-    app.register_blueprint(keys_bp,     url_prefix="/keys")
-    app.register_blueprint(messages_bp, url_prefix="/messages")
+    from .routes.conversations import conversations_bp
+    from .routes.users import users_bp
+    app.register_blueprint(auth_bp,             url_prefix="/auth")
+    app.register_blueprint(keys_bp,             url_prefix="/keys")
+    app.register_blueprint(messages_bp,         url_prefix="/messages")
+    app.register_blueprint(conversations_bp,    url_prefix="/conversations")
+    app.register_blueprint(users_bp,            url_prefix="/users")
 
     # Register socket event handlers
     from .sockets import events

@@ -7,7 +7,9 @@ import {
     saveIdentityKey,
     saveSignedPrekey,
     saveOneTimePrekeys,
+    loadIdentityKey,
 } from '../storage/idb'
+
 
 const SIGNED_PREKEY_ID  = 1
 const NUM_ONE_TIME_KEYS = 20
@@ -52,16 +54,16 @@ export async function generateKeyBundle(): Promise<GeneratedKeyBundle> {
     // Registration ID — random number identifying this device
     const registrationId = KeyHelper.generateRegistrationId()
 
-    // Identity key pair — long term, never rotated
+    // IK
     const identityKeyPair = await KeyHelper.generateIdentityKeyPair()
 
-    // Signed prekey — medium term, signed by identity key
+    // SPK
     const signedPrekeyRecord = await KeyHelper.generateSignedPreKey(
         identityKeyPair,
         SIGNED_PREKEY_ID
     )
 
-    // One-time prekeys — batch of single use keys
+    // OPK
     const oneTimePrekeys: PreKeyType[] = []
     for (let i = 0; i < NUM_ONE_TIME_KEYS; i++) {
         const opk = await KeyHelper.generatePreKey(i + 1)
@@ -88,7 +90,7 @@ export async function generateKeyBundle(): Promise<GeneratedKeyBundle> {
     }
 }
 
-// ── Persist to IndexedDB ──────────────────────────────────────────────────────
+// DB interaction
 export async function generateAndStoreKeyBundle(): Promise<GeneratedKeyBundle> {
     const bundle = await generateKeyBundle()
 
@@ -111,7 +113,7 @@ export async function generateAndStoreKeyBundle(): Promise<GeneratedKeyBundle> {
     return bundle
 }
 
-// ── Format for Server Upload ──────────────────────────────────────────────────
+// Format for server
 export function formatBundleForUpload(bundle: GeneratedKeyBundle): object {
     return {
         ik_public:     arrayBufferToBase64(bundle.identityKey.pubKey),

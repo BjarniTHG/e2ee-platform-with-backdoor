@@ -9,8 +9,8 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/register", methods=["POST"])
 def register():
     """
-    No input required. Generates a token and short code for a new anonymous user.
-    Returns the plaintext token once — it is never stored, only its hash is.
+    Generates a token and short code for a new anonymous user.
+    Returns the plaintext token once
     """
     token      = generate_token()
     token_hash = hash_token(token)
@@ -21,8 +21,8 @@ def register():
     db.session.commit()
 
     return jsonify({
-        "token":      token,       # client must store this — never returned again
-        "short_code": short_code,  # public handle, safe to share
+        "token":      token,       
+        "short_code": short_code,  
     }), 201
 
 
@@ -30,7 +30,6 @@ def register():
 def validate():
     """
     Validates a token. Used by the client to check if a stored token is still valid.
-    Expects JSON: { "token": "..." }
     """
     data  = request.get_json()
     token = data.get("token")
