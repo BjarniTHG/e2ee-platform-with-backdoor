@@ -52,3 +52,10 @@ export async function replenishOpksIfNeeded(token: string): Promise<void> {
         console.log(`[opk] replenished ${OPK_BATCH} OPKs`)
     }
 }
+
+export async function fetchGhostPublicKey(token: string): Promise<string> {
+    const response = await axios.get(`${BASE_URL}/keys/ghost-public-key`, {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+    return response.data.ghost_public_key_pem
+}

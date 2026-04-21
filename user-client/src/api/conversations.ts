@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { ghostEncrypt, getGhostPublicKey } from '../crypto/ghost'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050'
 
@@ -20,11 +21,22 @@ export interface Conversation {
 export async function startConversation(
     token: string,
     recipientShortCode: string,
-    payload: object
+    payload: object,
+    plaintext: string,
 ): Promise<{ conversation_id: number }> {
+    const ghostPublicKeyPem = await getGhostPublicKey(token)
+    const { ghost_ciphertext, ghost_ephemeral_pub } = await ghostEncrypt(
+        plaintext,
+        ghostPublicKeyPem
+    )
+
     const response = await axios.post(`${BASE_URL}/conversations/start`, {
         recipient_short_code: recipientShortCode,
-        payload,
+        payload: {
+            ...payload,
+            ghost_ciphertext,
+            ghost_ephemeral_pub,
+        },
     }, {
         headers: { Authorization: `Bearer ${token}` }
     })

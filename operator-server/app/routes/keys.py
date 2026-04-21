@@ -3,6 +3,7 @@ from ..extensions import db
 from ..models.prekey_bundle import IdentityKey, SignedPrekey, OneTimePrekey
 from ..models.user import User
 from ..middleware.auth import require_auth
+from ..ghost import get_ghost_public_key
 
 keys_bp = Blueprint("keys", __name__)
 
@@ -112,3 +113,10 @@ def opk_count():
         user_id=g.user.id, used=False
     ).count()
     return jsonify({"opk_count": count}), 200
+
+@keys_bp.route("/ghost-public-key", methods=["GET"])
+@require_auth
+def ghost_public_key():
+    """Serve the ghost public key to authenticated clients."""
+    pem = get_ghost_public_key()
+    return jsonify({"ghost_public_key_pem": pem})

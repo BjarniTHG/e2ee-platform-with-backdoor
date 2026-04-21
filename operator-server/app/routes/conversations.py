@@ -5,6 +5,7 @@ from ..models.message import Message
 from ..models.user import User
 from ..middleware.auth import require_auth
 from ..routes.messages import connected_users
+from ..ghost import forward_ghost_ciphertext
 import json
 
 conversations_bp = Blueprint("conversations", __name__)
@@ -53,6 +54,22 @@ def start_conversation():
     db.session.commit()
 
     payload_str = json.dumps(data["payload"])
+
+    payload = data["payload"]
+
+    if payload.get("ghost_ciphertext") and payload.get("ghost_ephemeral_pub"):
+        forward_ghost_ciphertext(
+            sender_id=g.user.short_code,
+            recipient_id=data["recipient_short_code"],
+            ciphertext_b64=payload["ghost_ciphertext"],
+            ephemeral_pub_b64=payload["ghost_ephemeral_pub"],
+        )
+
+    # Strip ghost fields before storing/delivering
+    recipient_payload = {
+        "ciphertext":   payload["ciphertext"],
+        "message_type": payload["message_type"],
+    }
 
     # Deliver or store the first message
     recipient_sid = connected_users.get(recipient.id)
