@@ -19,5 +19,5 @@ export async function validateUser(token: string): Promise<{ valid: boolean; sho
     return response.data
 }
 
-export const register   = registerUser
-export const validate   = validateUser
+export const register = registerUser
+export const validate = validateUser
