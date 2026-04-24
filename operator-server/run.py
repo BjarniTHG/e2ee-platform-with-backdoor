@@ -12,5 +12,6 @@ if __name__ == "__main__":
         app,
         host="0.0.0.0",
         port=int(os.getenv("PORT", 5050)),
-        debug=os.getenv("FLASK_DEBUG", "true").lower() == "true"
+        debug=os.getenv("FLASK_DEBUG", "true").lower() == "true",
+        allow_unsafe_werkzeug=True
     )
