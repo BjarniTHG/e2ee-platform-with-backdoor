@@ -11,7 +11,8 @@ export function SocketProvider({ children }) {
   useEffect(() => {
     if (loading || !token) return
 
-    const s = io("/", { auth: { token } })
+    const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050'
+    const s = io(SOCKET_URL, { auth: { token } })
     setSocket(s)
 
     return () => s.disconnect()

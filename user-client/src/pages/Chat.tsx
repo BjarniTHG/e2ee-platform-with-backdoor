@@ -20,7 +20,8 @@ export default function Chat() {
     // TODO later: encrypt with double ratchet
     const payload = { ciphertext: "TODO" }
 
-    await fetch("/send", {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050'
+    await fetch(`${API_URL}/send`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
