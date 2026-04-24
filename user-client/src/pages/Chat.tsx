@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from "react"
 import { SocketContext } from "../context/SocketContext"
 import { useParams } from "react-router-dom"
+import { sendMessage } from "../api/messages"
 
 export default function Chat() {
   const socket = useContext(SocketContext)
@@ -10,37 +11,26 @@ export default function Chat() {
 
   useEffect(() => {
     if (!socket) return;
-    socket.on("receive_message", (msg) => {
-      setMessages((m) => [...m, msg])
-    });
-    return () => socket.off("receive_message")
+      socket.on("receive_message", (msg) => {
+        setMessages((m) => [...m, { 
+          self: false, 
+          text: msg.payload?.ciphertext || "[encrypted]"
+        }])
+      })
+    return () => { socket.off("receive_message") }
   }, [socket])
 
   async function send() {
-    // TODO later: encrypt with double ratchet
-    const payload = { ciphertext: "TODO" }
-
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5050'
-    await fetch(`${API_URL}/send`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-      body: JSON.stringify({
-        recipient_short_code: shortCode,
-        payload,
-      }),
-    })
-
-    setMessages((m) => [...m, { self: true, text }]);
+    if (!text || !shortCode) return
+    const token = localStorage.getItem("token") || ""
+    await sendMessage(token, shortCode, text, 1, text)
+    setMessages((m) => [...m, { self: true, text }])
     setText("")
   }
 
   return (
     <div>
       <h2>Chat with {shortCode}</h2>
-
       <div className="messages">
         {messages.map((m, i) => (
           <div key={i} className={m.self ? "me" : "them"}>
@@ -48,7 +38,6 @@ export default function Chat() {
           </div>
         ))}
       </div>
-
       <input
         value={text}
         onChange={(e) => setText(e.target.value)}
